@@ -107,7 +107,9 @@ def remove_old_passe(timelimitdays = 365 ):
                 shutil.rmtree(os.path.join(image_folder_path, image_folder))
                 nb_dir_delete = nb_dir_delete + 1
         else:
-            print('Error occure, NO "dataset.json" Check file: ', os.path.join(image_folder_path, image_folder))
+            print('Error occure, NO "dataset.json" in file: ', os.path.join(image_folder_path, image_folder), "File deletated")
+            shutil.rmtree(os.path.join(image_folder_path, image_folder))
+            nb_dir_delete = nb_dir_delete + 1
                 
 
     return nb_dir_delete
