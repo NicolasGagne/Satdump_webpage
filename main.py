@@ -1,6 +1,10 @@
+import time
+
 from flask import Flask, render_template, send_from_directory, request
 import os, json, shutil, re
 from datetime import datetime, timedelta
+from PIL import Image
+
 
 
 app = Flask(__name__)
@@ -49,13 +53,24 @@ def explore_directory(static_path, dir):
     :return: list of images dict {'name': img, 'path':  img)}
     """
     images = []
+
     for img in os.listdir(os.path.join(static_path, dir)):
 
-        if os.path.join(static_path, dir, img).endswith(".png"):
-            images.append({'name': img, 'path': os.path.join(dir, img)})
+        if img != "Thumbnails":
 
-        elif os.path.isdir(os.path.join(static_path, dir, img)):
-            images = images + explore_directory(static_path, os.path.join(dir, img))
+            if os.path.join(static_path, dir, img).endswith(".png"):
+                current = {'name': img, 'path': os.path.join(dir, img),}
+                path_thumbnail = os.path.join(dir, "Thumbnails", "thumb_"+img)
+
+                if os.path.exists(os.path.join(static_path, path_thumbnail)):
+                    current['thumb'] = path_thumbnail
+
+                images.append(current)
+
+            elif os.path.isdir(os.path.join(static_path, dir, img)):
+                i = explore_directory(static_path, os.path.join(dir, img))
+                images = images + i
+
 
     return images
 
@@ -80,6 +95,7 @@ def get_images():
 
             # Get the images for this passe
             passe_images["pass_images"] = explore_directory(image_folder_path, image_folder)
+
             images.append(passe_images)
 
     images = sorted(images, key=lambda x: x["passe_info"]["timestamp"], reverse=True)
@@ -114,15 +130,62 @@ def remove_old_passe(timelimitdays = 365 ):
 
     return nb_dir_delete
 
+def create_thumpnails(folder = image_folder_path):
+    """
+    Create thumbnail in each folder that has images
+    :param folder to explore
+    :return: number of thumnail created
+    """
+    list_folder = os.listdir(folder)
+    nb_thumb = 0
+    if "Thumbnails" not in list_folder:
+
+        if folder != image_folder_path:
+            os.makedirs(os.path.join(folder, "Thumbnails"), exist_ok=True)
+
+        for file in list_folder:
+
+            if os.path.join(folder, file).endswith(".png"):
+
+                with Image.open(os.path.join(folder, file)) as img:
+
+                    # Convert the image to 'RGB' if it's not in a compatible mode
+                    if img.mode not in ('RGB', 'L'):
+                        img = img.point(lambda i: i * (1.0 / 256)).convert('L')  # Rescale 16-bit to 8-bit
+                    # Define the maximum size for the thumbnail (width, height)
+                    size = 128, 128
+                    # Create a thumbnail (this modifies the image in place)
+                    img.thumbnail(size)
+
+                    # Save the thumbnail to a new file
+
+                    thumbnail_path = os.path.join(folder, "Thumbnails/", "thumb_" + file)
+                    img.save(thumbnail_path)
+
+                    nb_thumb = nb_thumb + 1
+
+
+            elif os.path.isdir(os.path.join(folder, file)) and file != "Thumbnails":
+                nb_thumb = nb_thumb + create_thumpnails(os.path.join(folder, file))
+
+    return nb_thumb
+
+
+
+
 @app.route('/')
 def index():
 
     # warning the line bellow will delete the passes that are more than X days old.
     print(remove_old_passe(7), "directory remove")
+
+    # Create Thumbnail
+    print(create_thumpnails(), " thumbnails created")
+
     images = get_images()
 
     page = request.args.get('page', 1, type=int)
-    per_page = 5
+    per_page = 10
     start = (page - 1) * per_page
     end = start + per_page
     total_pages = int(round(len(images) / per_page, 0))
@@ -134,5 +197,5 @@ def index():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host="0.0.0.0")
+    app.run(debug=True, host="0.0.0.0", port=5000)
 

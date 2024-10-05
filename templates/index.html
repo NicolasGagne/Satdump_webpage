@@ -34,7 +34,7 @@
             <div class="col-md-2">
                 <div class="thumbnail">
                     <a href={{ url_for('image_static', filename=image.path) }}>
-                        <img src="{{ url_for('image_static', filename=image.path) }}" loading="lazy" style="width:100%; height:auto" alt="Image" >
+                        <img src="{{ url_for('image_static', filename=image.thumb) }}" loading="lazy" style="width:100%; height:auto" alt="Image" >
                         <div class="caption">
                             <h7>{{ image.name }}</h7>
                         </div>
