@@ -122,8 +122,9 @@ def remove_old_passe(timelimitdays = 365 ):
             if time_passe + timedelta(days=timelimitdays) < now:
                 shutil.rmtree(os.path.join(image_folder_path, image_folder))
                 nb_dir_delete = nb_dir_delete + 1
-        else:
-            print('Error occure, NO "dataset.json" in file: ', os.path.join(image_folder_path, image_folder), "File deletated")
+                
+        elif datetime.fromtimestamp(os.path.getctime(os.path.join(image_folder_path, image_folder))) + timedelta(days=1) < now:
+            print('Error occure, NO "dataset.json" in file: ', os.path.join(image_folder_path, image_folder), " and folser is older than 6h; Folder deletated")
             shutil.rmtree(os.path.join(image_folder_path, image_folder))
             nb_dir_delete = nb_dir_delete + 1
                 
