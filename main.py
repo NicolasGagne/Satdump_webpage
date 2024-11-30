@@ -35,7 +35,7 @@ def load_settings_json(setting_json_path="../../.config/satdump/settings.json"):
             # Load JSON from the processed content
             setting_json  = json.loads(json_content)
 
-            return setting_json["satdump_directories"]["default_output_directory"]["value"]
+            return setting_json["satdump_directories"]["live_processing_path"]["value"]
 
     except FileNotFoundError:
         print("Unable to find setting.json")
